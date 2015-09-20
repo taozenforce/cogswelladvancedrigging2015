@@ -1,1 +1,0 @@
-# cogswelladvancedrigging2015
