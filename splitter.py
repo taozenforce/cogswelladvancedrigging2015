@@ -1,3 +1,6 @@
+__author__ = 'Sergio Sykes'
+__version__ = 'Fall 2015'
+
 # Usage:
 
 # import splitter

@@ -7,7 +7,9 @@ To create pole vector location form a ikHandle selection (enter your desired off
     import hellamath; hellamath.getPoleVectorFromIK( -your_offset_here- )
 
 """
-__author__ = 'ssykes@cogswell.edu'
+__author__ = 'Sergio Sykes'
+__version__ = 'Fall 2015'
+
 
 import pymel.core as pmc
 from pymel.core.datatypes import Vector

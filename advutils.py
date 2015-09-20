@@ -1,3 +1,6 @@
+__author__ = 'Sergio Sykes'
+__version__ = 'Fall 2015'
+
 import pymel.core as pmc
 
 ROO_XYZ, ROO_YZX, ROO_ZXY, ROO_XZY, ROO_YXZ, ROO_ZYX = range(6)
