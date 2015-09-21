@@ -1,12 +1,19 @@
+__author__ = 'Sergio Sykes'
+__version__ = 'Fall 2015'
+
 from itertools import izip
 import pymel.core as pmc
 
 from hellamath import getPoleVectorPosition
 from advutils import alignObjects
 
+JOINT_BASE_PREFIX = 'rig'  # existing prefix of control joints that will be queried in search/replace functions within script
+IK_JOINT_PREFIX = 'ikj'  # Prefix convention for duplicated joints for IK systems
+FK_JOINT_PREFIX = 'fkj'  # Prefix convention for duplicated joints for FK systems
+
 
 def makeIkFkJoints(joints, attribute=None, stretchy=False,
-                   jointPrefix='rig', ikJointPrefix='ikj', fkJointPrefix='fkj'):
+                   jointPrefix=JOINT_BASE_PREFIX, ikJointPrefix=IK_JOINT_PREFIX, fkJointPrefix=FK_JOINT_PREFIX):
     """
     Creates 2 duplicate hierarchies from passed in joints
     (please make sure the list of joints are in same hierarchy)
@@ -191,3 +198,108 @@ def matchIkToFk(ikControl, ikPole, offset=100.0, msgAttr='fkjoints', autoKey=Tru
         pmc.setKeyframe([ikControl, ikPole], time=frameBeforeCurrent)
 
     pmc.headsUpMessage('BAMF!')
+
+
+## WORK IN PROGRESS
+# TODO flesh out GUI callbacks
+class App(object):
+    """
+    Window GUI for creating IKFK joints in the current scene
+    """
+
+    def __init__(self):
+        """
+        Initializing default member variables
+        """
+        self._jointPrefix = JOINT_BASE_PREFIX
+        self._ikJointPrefix = IK_JOINT_PREFIX
+        self._fkJointPrefix = FK_JOINT_PREFIX
+        self.mainWindow = None
+
+    def Draw(self, windowName):
+        """
+        Creates the UI for using the script
+        """
+
+        if pmc.window(windowName, exists=True):
+            pmc.deleteUI(windowName, window=True)
+
+        self.mainWindow = pmc.window(windowName, title='Advanced Rigging IKFK Maker')
+        layout = pmc.formLayout()
+        existText = pmc.text(label='Existing Joints', align='left')
+        self._jointTsc = pmc.textScrollList(numberOfRows=8, width=200, height=300)
+        loadJointsBtn = pmc.button(label='Load Sel.', width=100, command=pmc.Callback(self._loadJoints))
+
+        nameText = pmc.text(label='Naming Convention', align='left')
+        self._autoPrefixCheck = pmc.checkBox(label='Auto Prefix', value=True)
+        self._basePrefixField = pmc.textFieldGrp(label='Base', text=JOINT_BASE_PREFIX, columnWidth2=(25, 100))
+        self._ikPrefixField = pmc.textFieldGrp(label='IK', text=IK_JOINT_PREFIX, columnWidth2=(25, 100))
+        self._fkPrefixField = pmc.textFieldGrp(label='FK', text=FK_JOINT_PREFIX, columnWidth2=(25, 100))
+
+        self._attrField = pmc.textFieldGrp(label='IKFK switch attribute', placeholderText='controlname.attribute',
+                                           ann='Existing control in scene for connecting IKFK switch. '
+                                               'Attribute will be created if it doesn\'t exist',
+                                           columnWidth2=(125, 175))
+
+        self._stretchyCheck = pmc.checkBox(label='Stretchy Connections?', value=True)
+
+        createBtn = pmc.button(label='Create', width=75, command=pmc.Callback(self._callback, True))
+        applyBtn = pmc.button(label='Apply', width=75, command=pmc.Callback(self._callback, False))
+        closeBtn = pmc.button(label='Close', width=75, command=pmc.Callback(pmc.deleteUI, self.mainWindow))
+
+        # Joint widget placement
+        layout.attachForm(existText, 'left', 5)
+        layout.attachForm(existText, 'top', 5)
+        layout.attachForm(self._jointTsc, 'left', 5)
+        layout.attachForm(loadJointsBtn, 'left', 105)
+        layout.attachControl(self._jointTsc, 'top', 5, existText)
+        layout.attachControl(loadJointsBtn, 'top', 5, self._jointTsc)
+
+        # Prefix widget layout placement
+        layout.attachForm(nameText, 'top', 5)
+        layout.attachControl(nameText, 'left', 5, self._jointTsc)
+        layout.attachControl(self._autoPrefixCheck, 'left', 5, self._jointTsc)
+        layout.attachControl(self._autoPrefixCheck, 'top', 5, nameText)
+        layout.attachControl(self._basePrefixField, 'left', 5, self._jointTsc)
+        layout.attachControl(self._basePrefixField, 'top', 5, self._autoPrefixCheck)
+        layout.attachControl(self._ikPrefixField, 'left', 5, self._jointTsc)
+        layout.attachControl(self._ikPrefixField, 'top', 5, self._basePrefixField)
+        layout.attachControl(self._fkPrefixField, 'left', 5, self._jointTsc)
+        layout.attachControl(self._fkPrefixField, 'top', 5, self._ikPrefixField)
+
+        # Controller and stretchiness widget layout placement
+        layout.attachForm(self._attrField, 'left', 5)
+        layout.attachForm(self._stretchyCheck, 'left', 100)
+        layout.attachControl(self._attrField, 'top', 5, loadJointsBtn)
+        layout.attachControl(self._stretchyCheck, 'top', 5, self._attrField)
+
+        # Layout for Create/Apply/Close buttons
+        layout.attachForm(createBtn, 'left', 55)
+        layout.attachControl(createBtn, 'top', 5, self._stretchyCheck)
+        layout.attachControl(applyBtn, 'top', 5, self._stretchyCheck)
+        layout.attachControl(applyBtn, 'left', 5, createBtn)
+        layout.attachControl(closeBtn, 'top', 5, self._stretchyCheck)
+        layout.attachControl(closeBtn, 'left', 5, applyBtn)
+
+        self.mainWindow.setWidthHeight((347, 443))
+        self.mainWindow.show()
+
+    def _callback(self, closeGUI):
+        makeIkFkJoints(pmc.selected(type='joint'))
+
+        if closeGUI:
+            pmc.deleteUI(self.mainWindow, window=True)
+
+    def _loadJoints(self):
+        print 'loading joints to list still TODO'
+
+        # check for auto prefix,
+        # if true, seperate initial prefix and place into UI
+
+
+# MAIN EXECUTION
+def GUI():
+    global MAIN_WINDOW
+
+    MAIN_WINDOW = App()
+    MAIN_WINDOW.Draw('AdvancedRiggingIKFK')
