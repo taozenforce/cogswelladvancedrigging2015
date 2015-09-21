@@ -7,6 +7,12 @@ ROO_XYZ, ROO_YZX, ROO_ZXY, ROO_XZY, ROO_YXZ, ROO_ZYX = range(6)
 
 
 def getAttribute(node, attr, **kwargs):
+    """
+    If attr exists on the control, return the control and attribute as controlname.attrname
+    If the attribute doesn't exist, this function will create the attribute using the specified flags
+    Look at the addAttr command in the documentation for the full list of commands.
+    """
+
     if not pmc.attributeQuery(attr, node=node, exists=True):
         pmc.addAttr(node, ln=attr, **kwargs)
 

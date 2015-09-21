@@ -5,7 +5,7 @@ from itertools import izip
 import pymel.core as pmc
 
 from hellamath import getPoleVectorPosition
-from advutils import alignObjects
+from advutils import alignObjects, getAttribute
 
 JOINT_BASE_PREFIX = 'rig'  # existing prefix of control joints that will be queried in search/replace functions within script
 IK_JOINT_PREFIX = 'ikj'  # Prefix convention for duplicated joints for IK systems
@@ -285,16 +285,62 @@ class App(object):
         self.mainWindow.show()
 
     def _callback(self, closeGUI):
-        makeIkFkJoints(pmc.selected(type='joint'))
+        joints = map(pmc.PyNode, self._jointTsc.getAllItems())
+        attribute = None
+        rawControlText = self._attrField.getText()
+        if rawControlText:
+            control, attrname = rawControlText.partition('.')[::2]
+
+            if not attrname:
+                pmc.warning('IKFK :: can\'t read attribute specified in IKFK switch attribute. '
+                            'Make sure to specify using control.attr format!')
+                return
+
+            if not pmc.objExists(control):
+                pmc.warning('IKFK :: Controller {0} not found in scene!'.format(control))
+                return
+
+            attribute = getAttribute(control, attrname, min=0, max=1, defaultValue=0, keyable=True)
+        else:
+            choice = pmc.confirmDialog(title='IKFK - No Attribute Specified',
+                                       message='I noticed you didn\'t specify a controller for connecting the IKFK '
+                                               'switch.\nDo you want to go ahead and complete the IKFK setup and '
+                                               'you can connect a controller later?',
+                                       button=['Yes', 'No'], defaultButton='Yes', cancelButton='No', dismissString='No')
+
+            if choice == 'No':
+                return
+
+        stretchy = self._stretchyCheck.getValue()
+        jointPrefix = self._basePrefixField.getText()
+        ikJointPrefix = self._ikPrefixField.getText()
+        fkJointPrefix = self._fkPrefixField.getText()
+
+        result = makeIkFkJoints(joints, attribute, stretchy, jointPrefix, ikJointPrefix, fkJointPrefix)
+
+        if not rawControlText:
+            pmc.select(result[-1])
+            pmc.confirmDialog(title='IKFK Setup Complete BUT...', message='IKFK creation successful. '
+                                                                          'Take a note of the selected blendColors as '
+                                                                          'they\'ll need to be connected to your IKFK'
+                                                                          'controller.\nEnjoy!')
 
         if closeGUI:
             pmc.deleteUI(self.mainWindow, window=True)
 
     def _loadJoints(self):
-        print 'loading joints to list still TODO'
+        self._jointTsc.removeAll()
 
-        # check for auto prefix,
-        # if true, seperate initial prefix and place into UI
+        joints = pmc.selected(type='joint')
+        if not len(joints):
+            return
+
+        self._jointTsc.extend(joints)
+
+        if self._autoPrefixCheck.getValue():
+            result = joints[0].name().split('_')
+            if len(result) > 1:
+                self._basePrefixField.setText(result[0])
 
 
 # MAIN EXECUTION
