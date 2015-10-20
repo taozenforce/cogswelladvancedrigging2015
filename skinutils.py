@@ -36,4 +36,4 @@ def updateBindPose():
     dag = pmc.dagPose(q=True, bindPose=True)
     objects = pmc.dagPose(dag, q=True, members=True)
     for obj in objects:
-        pmc.dagPose(obj, reset=True, name=dag)
+        pmc.dagPose(obj, reset=True, name=dag[0])
