@@ -127,6 +127,29 @@ def makeIkFkJoints(joints, attribute=None, stretchy=False,
     pmc.select(clear=True)
     return ikGrp, fkGrp, blendNodes
 
+# IKFK MATCHING Setup Example
+#
+# Script Editor Usage for connections:
+# ## Link FK Joints to IK Control
+# control = pmc.PyNode('ctl_ik_right_leg')
+# joints = pmc.selected(type='joint')
+
+# pmc.addAttr(control, at='message', ln='fkjoints', multi=True)
+# for i, fkj in enumerate(pmc.selected(type='joint')):
+#     fkj.message.connect('{0:s}.fkjoints[{1:d}]'.format(control, i))
+   
+# ## Link IK Joints to FK Control
+# control = pmc.PyNode('ctl_fk_right_leg_ankle')
+# joints = pmc.selected(type='joint')
+
+# pmc.addAttr(control, at='message', ln='ikjoints', multi=True)
+# for i, fkj in enumerate(pmc.selected(type='joint')):
+#     fkj.message.connect('{0:s}.ikjoints[{1:d}]'.format(control, i))
+
+# ## Placeholder ikfk connection for further navigation
+# for ctl in ['ik_ctrl', 'fk_wrist_ctrl']:
+#     pmc.addAttr(ctl, ln='ikfk')
+#     pmc.connectAttr('ikfk_ctrl.limb', ctl + '.ikfk')
 
 def matchFkToIk(fkControls, msgAttr='ikjoints', autoKey=True):
     """
